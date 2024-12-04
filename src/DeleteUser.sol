@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { Test, console } from 'forge-std/Test.sol';
+import {Test, console} from "forge-std/Test.sol";
 
 /**
  * This contract starts with 1 ether.
@@ -9,29 +9,29 @@ import { Test, console } from 'forge-std/Test.sol';
  *
  */
 contract DeleteUser {
-  struct User {
-    address addr;
-    uint256 amount;
-  }
+    struct User {
+        address addr;
+        uint256 amount;
+    }
 
-  User[] private users;
+    User[] private users;
 
-  function deposit() external payable {
-    users.push(User({ addr: msg.sender, amount: msg.value }));
-  }
+    function deposit() external payable {
+        users.push(User({addr: msg.sender, amount: msg.value}));
+    }
 
-  function withdraw(uint256 index) external {
-    User storage user = users[index];
+    function withdraw(uint256 index) external {
+        User storage user = users[index];
 
-    console.log('user.addr', user.addr);
-    console.log('msg.sender', msg.sender);
+        console.log("user.addr", user.addr);
+        console.log("msg.sender", msg.sender);
 
-    require(user.addr == msg.sender);
-    uint256 amount = user.amount;
+        require(user.addr == msg.sender);
+        uint256 amount = user.amount;
 
-    user = users[users.length - 1];
-    users.pop();
+        user = users[users.length - 1];
+        users.pop();
 
-    msg.sender.call{ value: amount }('');
-  }
+        msg.sender.call{value: amount}("");
+    }
 }
