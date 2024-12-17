@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Test, console} from "forge-std/Test.sol";
 
 contract Overmint3 is ERC721 {

