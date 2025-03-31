@@ -21,6 +21,9 @@ contract DeleteUserTest is Test {
     }
 
     function testDrainContract() public {
+        console.log("ADDRESS_THIS", address(this));
+        console.log("ADDRESS_ALICE", address(alice));
+        console.log("--------------------------------");
         vm.startPrank(alice);
         victimContract.deposit{value: 1 ether}();
         victimContract.deposit{value: 0 ether}();

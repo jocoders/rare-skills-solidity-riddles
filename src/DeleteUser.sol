@@ -22,6 +22,9 @@ contract DeleteUser {
 
     function withdraw(uint256 index) external {
         User storage user = users[index];
+        console.log("USER_ADDR", user.addr);
+        console.log("USER_AMOUNT", user.amount);
+        console.log("--------------------------------");
         require(user.addr == msg.sender);
         uint256 amount = user.amount;
 
